@@ -76,7 +76,7 @@ pybolt
 Clone the repository and navigate to the project directory:
 
 ```bash
-git clone https://github.com/yourusername/pybolt.git
+[git clone https://github.com/yourusername/pybolt.git](https://github.com/sanowl/PyBolt-A-High-Performance-Python-Compiler.git)
 cd pybolt
 ```
 
