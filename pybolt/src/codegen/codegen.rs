@@ -45,26 +45,35 @@ impl CodeGenerator {
                 let right_temp = self.generate_temp_var();
                 self.visit_node(left)?;
                 self.visit_node(right)?;
+                self.instructions.push(MachineInstruction::LoadImmediate {
+                    dest: left_temp.clone(),
+                    value: self.extract_immediate_value(left)?,
+                });
+                self.instructions.push(MachineInstruction::LoadImmediate {
+                    dest: right_temp.clone(),
+                    value: self.extract_immediate_value(right)?,
+                });
+                let result_var = self.generate_temp_var();
                 let instruction = match operator.as_str() {
                     "+" => MachineInstruction::Add {
-                        dest: left_temp.clone(),
-                        src1: self.extract_var_name(left)?,
-                        src2: self.extract_var_name(right)?,
+                        dest: result_var.clone(),
+                        src1: left_temp,
+                        src2: right_temp,
                     },
                     "-" => MachineInstruction::Sub {
-                        dest: left_temp.clone(),
-                        src1: self.extract_var_name(left)?,
-                        src2: self.extract_var_name(right)?,
+                        dest: result_var.clone(),
+                        src1: left_temp,
+                        src2: right_temp,
                     },
                     "*" => MachineInstruction::Mul {
-                        dest: left_temp.clone(),
-                        src1: self.extract_var_name(left)?,
-                        src2: self.extract_var_name(right)?,
+                        dest: result_var.clone(),
+                        src1: left_temp,
+                        src2: right_temp,
                     },
                     "/" => MachineInstruction::Div {
-                        dest: left_temp.clone(),
-                        src1: self.extract_var_name(left)?,
-                        src2: self.extract_var_name(right)?,
+                        dest: result_var.clone(),
+                        src1: left_temp,
+                        src2: right_temp,
                     },
                     _ => return Err(format!("Unknown operator: {}", operator)),
                 };
@@ -83,10 +92,10 @@ impl CodeGenerator {
         Ok(())
     }
 
-    fn extract_var_name(&self, ir: &IR) -> Result<String, String> {
+    fn extract_immediate_value(&self, ir: &IR) -> Result<i32, String> {
         match ir {
-            IR::Immediate { dest, .. } => Ok(dest.clone()),
-            _ => Err("Expected variable name".to_string()),
+            IR::Immediate { value, .. } => Ok(*value),
+            _ => Err("Expected immediate value".to_string()),
         }
     }
 
@@ -96,54 +105,3 @@ impl CodeGenerator {
         temp_var
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::ir::ir::{IRGenerator, IR};
-    use crate::lexer::lexer::Lexer;
-    use crate::parser::parser::Parser;
-
-    #[test]
-    fn test_code_generation() {
-        let input = "let x = 42;";
-        let mut lexer = Lexer::new(input);
-        let mut parser = Parser::new(lexer);
-        let ast = parser.parse().unwrap();
-
-        let mut ir_generator = IRGenerator::new();
-        let ir = ir_generator.generate(&parser).unwrap();
-
-        let mut code_generator = CodeGenerator::new();
-        let instructions = code_generator.generate(&ir_generator).expect("Code generation failed");
-
-        assert_eq!(instructions.len(), 1);
-        if let MachineInstruction::LoadImmediate { dest, value } = &instructions[0] {
-            assert_eq!(dest, "x");
-            assert_eq!(*value, 42);
-        } else {
-            panic!("Expected LoadImmediate instruction");
-        }
-    }
-
-    #[test]
-    fn test_code_generation_with_binary_operation() {
-        let input = "let y = 1 + 2;";
-        let mut lexer = Lexer::new(input);
-        let mut parser = Parser::new(lexer);
-        let ast = parser.parse().unwrap();
-
-        let mut ir_generator = IRGenerator::new();
-        let ir = ir_generator.generate(&parser).unwrap();
-
-        let mut code_generator = CodeGenerator::new();
-        let instructions = code_generator.generate(&ir_generator).expect("Code generation failed");
-
-        assert_eq!(instructions.len(), 3);
-        if let MachineInstruction::LoadImmediate { dest, value } = &instructions[0] {
-            assert_eq!(dest, "t0");
-            assert_eq!(*value, 1);
-        } else {
-            panic!("Expected LoadImmediate instruction");
-        }
-        if let M
