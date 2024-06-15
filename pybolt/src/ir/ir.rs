@@ -1,14 +1,122 @@
-use crate::parser::parser::Parser;
+use crate::parser::parser::{Parser, ASTNode, ASTNodeType};
 
-pub struct IRGenerator;
+#[derive(Debug, Clone)]
+pub enum IR {
+    VariableDeclaration { name: String, value: i32 },
+    BinaryOperation { operator: String, left: Box<IR>, right: Box<IR> },
+    Immediate { value: i32, dest: String },
+    Print { var: String },
+}
+
+pub struct IRGenerator {
+    ir: Vec<IR>,
+}
 
 impl IRGenerator {
     pub fn new() -> Self {
-        IRGenerator
+        IRGenerator { ir: Vec::new() }
     }
 
-    pub fn generate(&mut self, parser: &Parser) -> Result<(), String> {
+    pub fn generate(&mut self, parser: &Parser) -> Result<Vec<IR>, String> {
+        let ast = parser.get_ast();
+        self.visit_node(&ast)?;
         println!("IR generation completed.");
+        Ok(self.ir.clone())
+    }
+
+    fn visit_node(&mut self, node: &ASTNode) -> Result<(), String> {
+        match node {
+            ASTNode::Program(nodes) => {
+                for child in nodes {
+                    self.visit_node(child)?;
+                }
+            }
+            ASTNode::VariableDeclaration { name, value } => {
+                if let ASTNode::Number(n) = **value {
+                    self.ir.push(IR::VariableDeclaration { name: name.clone(), value: n });
+                } else {
+                    return Err("Expected a number in variable declaration".to_string());
+                }
+            }
+            ASTNode::BinaryOperation { operator, left, right } => {
+                let left_ir = self.generate_ir_from_node(left)?;
+                let right_ir = self.generate_ir_from_node(right)?;
+                self.ir.push(IR::BinaryOperation {
+                    operator: operator.clone(),
+                    left: Box::new(left_ir),
+                    right: Box::new(right_ir),
+                });
+            }
+            ASTNode::Number(n) => {
+                self.ir.push(IR::Immediate { value: *n, dest: "temp".to_string() });
+            }
+            ASTNode::Expression(ASTNodeType::Identifier(name)) => {
+                self.ir.push(IR::Print { var: name.clone() });
+            }
+            _ => return Err("Unsupported AST node type".to_string()),
+        }
         Ok(())
+    }
+
+    fn generate_ir_from_node(&mut self, node: &ASTNode) -> Result<IR, String> {
+        match node {
+            ASTNode::Number(n) => Ok(IR::Immediate { value: *n, dest: "temp".to_string() }),
+            ASTNode::BinaryOperation { operator, left, right } => {
+                let left_ir = self.generate_ir_from_node(left)?;
+                let right_ir = self.generate_ir_from_node(right)?;
+                Ok(IR::BinaryOperation {
+                    operator: operator.clone(),
+                    left: Box::new(left_ir),
+                    right: Box::new(right_ir),
+                })
+            }
+            ASTNode::Expression(ASTNodeType::Identifier(name)) => Ok(IR::Print { var: name.clone() }),
+            _ => Err("Unsupported AST node type".to_string()),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::lexer::Lexer;
+    use crate::parser::parser::Parser;
+
+    #[test]
+    fn test_ir_generation() {
+        let input = "let x = 42;";
+        let mut lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+        let ast = parser.parse().unwrap();
+
+        let mut ir_generator = IRGenerator::new();
+        let ir = ir_generator.generate(&parser).expect("IR generation failed");
+
+        assert_eq!(ir.len(), 1);
+        if let IR::VariableDeclaration { name, value } = &ir[0] {
+            assert_eq!(name, "x");
+            assert_eq!(*value, 42);
+        } else {
+            panic!("Expected variable declaration IR");
+        }
+    }
+
+    #[test]
+    fn test_ir_generation_with_binary_operation() {
+        let input = "let y = 1 + 2;";
+        let mut lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+        let ast = parser.parse().unwrap();
+
+        let mut ir_generator = IRGenerator::new();
+        let ir = ir_generator.generate(&parser).expect("IR generation failed");
+
+        assert_eq!(ir.len(), 1);
+        if let IR::VariableDeclaration { name, value } = &ir[0] {
+            assert_eq!(name, "y");
+            assert_eq!(*value, 3); // Assuming constant folding optimization
+        } else {
+            panic!("Expected variable declaration IR");
+        }
     }
 }
