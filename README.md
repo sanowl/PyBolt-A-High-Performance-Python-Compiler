@@ -125,7 +125,6 @@ If you have any questions or feedback, feel free to reach out at [sanowl98@gmail
 Thank you for using PyBolt! We hope it makes your Python development more efficient and enjoyable.
 ```
 
-You can copy and paste this directly into the `README.md` file in your repository. If you need to add any specific details or make any changes, feel free to do so.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
