@@ -12,7 +12,7 @@ use semantic::semantic::SemanticAnalyzer;
 use ir::ir::IRGenerator;
 use optimizer::optimizer::Optimizer;
 use codegen::codegen::CodeGenerator;
-use runtime::runtime::Runtime;
+use runtime::runtime::{Runtime, Instruction};
 
 fn main() {
     let input = "let x = 42;";
@@ -35,17 +35,17 @@ fn main() {
 
     let mut ir_generator = IRGenerator::new();
     println!("IR Generation...");
-    ir_generator.generate(&parser).expect("IR generation failed");
+    let ir = ir_generator.generate(&parser).expect("IR generation failed");
 
     let mut optimizer = Optimizer::new();
     println!("Optimization...");
-    optimizer.optimize(&ir_generator).expect("Optimization failed");
+    let optimized_ir = optimizer.optimize(ir).expect("Optimization failed");
 
     let mut code_generator = CodeGenerator::new();
     println!("Code Generation...");
-    code_generator.generate(&ir_generator).expect("Code generation failed");
+    let instructions = code_generator.generate(&optimized_ir).expect("Code generation failed");
 
-    let mut runtime = Runtime::new();
+    let mut runtime = Runtime::new(instructions);  // Provide the necessary argument
     println!("Running...");
     runtime.run().expect("Runtime execution failed");
 }
