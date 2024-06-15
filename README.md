@@ -1,3 +1,8 @@
+
+
+
+
+```markdown
 # PyBolt
 
 ## Overview
@@ -58,3 +63,78 @@ pybolt
 │   └── design.md
 ├── .gitignore
 └── LICENSE
+```
+
+## Getting Started
+
+### Prerequisites
+
+- [Rust](https://www.rust-lang.org/tools/install) (1.50.0 or later)
+
+### Installation
+
+Clone the repository and navigate to the project directory:
+
+```bash
+git clone https://github.com/yourusername/pybolt.git
+cd pybolt
+```
+
+### Building the Project
+
+To build the project, run:
+
+```bash
+cargo build
+```
+
+### Running the Project
+
+To run the project, execute:
+
+```bash
+cargo run
+```
+
+### Testing
+
+To run the tests, use:
+
+```bash
+cargo test
+```
+
+## Examples
+
+You can find example Python code in the `examples` directory. These examples can be used to test the functionality of PyBolt.
+
+## Documentation
+
+Detailed documentation can be found in the `docs` directory. This includes an overview of the project and a design document that explains the architecture and design decisions.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to contribute to this project.
+
+## Contact
+
+If you have any questions or feedback, feel free to reach out at [sanowl98@gmail.com](mailto:sanowl98@gmail.com).
+
+---
+
+Thank you for using PyBolt! We hope it makes your Python development more efficient and enjoyable.
+```
+
+### Instructions
+
+1. **Save the README**:
+   Save the above content in a file named `README.md` in the root directory of your project.
+
+2. **Customize as Needed**:
+   If there are any specific instructions, examples, or additional sections you'd like to add, feel free to customize the README file to better fit your project's needs.
+
+
