@@ -1,8 +1,4 @@
 
-
-
-
-```markdown
 # PyBolt
 
 ## Overview
@@ -76,8 +72,8 @@ pybolt
 Clone the repository and navigate to the project directory:
 
 ```bash
-[git clone https://github.com/yourusername/pybolt.git](https://github.com/sanowl/PyBolt-A-High-Performance-Python-Compiler.git)
-cd pybolt
+git clone https://github.com/sanowl/PyBolt-A-High-Performance-Python-Compiler.git
+cd PyBolt-A-High-Performance-Python-Compiler
 ```
 
 ### Building the Project
@@ -129,12 +125,22 @@ If you have any questions or feedback, feel free to reach out at [sanowl98@gmail
 Thank you for using PyBolt! We hope it makes your Python development more efficient and enjoyable.
 ```
 
-### Instructions
+You can copy and paste this directly into the `README.md` file in your repository. If you need to add any specific details or make any changes, feel free to do so.
 
-1. **Save the README**:
-   Save the above content in a file named `README.md` in the root directory of your project.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-2. **Customize as Needed**:
-   If there are any specific instructions, examples, or additional sections you'd like to add, feel free to customize the README file to better fit your project's needs.
+## Contributing
+
+Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to contribute to this project.
+
+## Contact
+
+If you have any questions or feedback, feel free to reach out at [sanowl98@gmail.com](mailto:sanowl98@gmail.com).
+
+---
+
+Thank you for using PyBolt! We hope it makes your Python development more efficient and enjoyable.
+```
+
 
 
