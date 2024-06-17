@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Instruction {
     LoadImmediate { var: String, value: i32 },
     Add { dest: String, src1: String, src2: String },
@@ -39,8 +39,15 @@ impl Runtime {
             | Instruction::Sub { dest, src1, src2 }
             | Instruction::Mul { dest, src1, src2 }
             | Instruction::Div { dest, src1, src2 } => {
-                let val1 = self.symbol_table.get(src1).ok_or(format!("Undefined variable '{}'", src1))?;
-                let val2 = self.symbol_table.get(src2).ok_or(format!("Undefined variable '{}'", src2))?;
+                // Gather required values first
+                let val1 = self.symbol_table.get(src1).cloned();
+                let val2 = self.symbol_table.get(src2).cloned();
+                
+                // Ensure the values are available before proceeding
+                let val1 = val1.ok_or(format!("Undefined variable '{}'", src1))?;
+                let val2 = val2.ok_or(format!("Undefined variable '{}'", src2))?;
+                
+                // Perform the operation
                 let result = match instruction {
                     Instruction::Add { .. } => val1 + val2,
                     Instruction::Sub { .. } => val1 - val2,
@@ -48,17 +55,26 @@ impl Runtime {
                     Instruction::Div { .. } => val1 / val2,
                     _ => unreachable!(),
                 };
+                
+                // Update symbol_table with the result
                 self.symbol_table.insert(dest.clone(), result);
             }
             Instruction::Print { var } => {
-                if let Some(value) = self.symbol_table.get(var) {
-                    println!("{} = {}", var, value);
-                } else {
-                    return Err(format!("Undefined variable '{}'", var));
-                }
+                // Gather the value to print
+                let value = self.symbol_table.get(var).cloned();
+                
+                // Ensure the value is available before proceeding
+                let value = value.ok_or(format!("Undefined variable '{}'", var))?;
+                
+                // Print the value
+                println!("{} = {}", var, value);
             }
         }
         Ok(())
+    }
+
+    pub fn get_var_value(&self, var: &str) -> Option<&i32> {
+        self.symbol_table.get(var)
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::lexer::lexer::{Lexer, Token, TokenType};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ASTNode {
     Program(Vec<ASTNode>),
     VariableDeclaration { name: String, value: Box<ASTNode> },
@@ -9,7 +9,7 @@ pub enum ASTNode {
     BinaryOperation { left: Box<ASTNode>, operator: String, right: Box<ASTNode> },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ASTNodeType {
     Identifier(String),
     Number(i32),
@@ -19,24 +19,31 @@ pub enum ASTNodeType {
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
     current_token: Option<Token>,
+    ast: Option<ASTNode>,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(mut lexer: Lexer<'a>) -> Self {
         let current_token = lexer.next_token();
-        Parser { lexer, current_token }
+        Parser { lexer, current_token, ast: None }
     }
 
     pub fn parse(&mut self) -> Result<ASTNode, String> {
         let mut nodes = Vec::new();
-        while self.current_token.is_some() {
+        while self.current_token.is_some() && self.current_token.as_ref().unwrap().token_type != TokenType::Eof {
             nodes.push(self.parse_statement()?);
         }
-        Ok(ASTNode::Program(nodes))
+        let program_node = ASTNode::Program(nodes);
+        self.ast = Some(program_node.clone());
+        Ok(program_node)
+    }
+
+    pub fn get_ast(&self) -> ASTNode {
+        self.ast.clone().unwrap_or(ASTNode::Program(vec![]))
     }
 
     fn parse_statement(&mut self) -> Result<ASTNode, String> {
-        if self.match_token(TokenType::Keyword, "let") {
+        if self.match_token(&TokenType::Keyword, "let") {
             self.parse_variable_declaration()
         } else {
             self.parse_expression()
@@ -105,14 +112,14 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn match_token(&self, token_type: TokenType, lexeme: &str) -> bool {
+    fn match_token(&self, token_type: &TokenType, lexeme: &str) -> bool {
         self.current_token.as_ref().map_or(false, |token| {
-            token.token_type == token_type && (lexeme.is_empty() || token.lexeme == lexeme)
+            &token.token_type == token_type && (lexeme.is_empty() || token.lexeme == lexeme)
         })
     }
 
     fn expect_token(&mut self, token_type: TokenType, lexeme: &str) -> Result<Token, String> {
-        if self.match_token(token_type, lexeme) {
+        if self.match_token(&token_type, lexeme) {
             let token = self.current_token.clone().unwrap();
             self.current_token = self.lexer.next_token();
             Ok(token)

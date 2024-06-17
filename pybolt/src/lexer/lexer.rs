@@ -1,3 +1,9 @@
+#[derive(Debug, Clone)]
+pub struct Token {
+    pub token_type: TokenType,
+    pub lexeme: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     Keyword,
@@ -5,13 +11,7 @@ pub enum TokenType {
     Operator,
     Literal,
     Punctuation,
-    EOF,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Token {
-    pub token_type: TokenType,
-    pub lexeme: String,
+    Eof,
 }
 
 pub struct Lexer<'a> {
@@ -24,93 +24,58 @@ impl<'a> Lexer<'a> {
         Lexer { input, position: 0 }
     }
 
-    pub fn tokenize(&mut self) -> Vec<Token> {
-        let mut tokens = Vec::new();
-        while let Some(token) = self.next_token() {
-            if token.token_type != TokenType::EOF {
-                tokens.push(token);
-            } else {
-                break;
-            }
-        }
-        tokens
-    }
-
     pub fn next_token(&mut self) -> Option<Token> {
         self.skip_whitespace();
-
         if self.position >= self.input.len() {
-            return Some(Token {
-                token_type: TokenType::EOF,
-                lexeme: "".to_string(),
-            });
+            return Some(Token { token_type: TokenType::Eof, lexeme: "".to_string() });
         }
 
-        let current_char = self.input.chars().nth(self.position).unwrap();
+        let current_char = self.input.as_bytes()[self.position] as char;
 
-        if current_char.is_alphabetic() {
-            return Some(self.lex_identifier_or_keyword());
+        let token = if current_char.is_alphabetic() {
+            self.identifier()
         } else if current_char.is_digit(10) {
-            return Some(self.lex_number());
+            self.number()
         } else {
-            match current_char {
-                '=' => self.create_token(TokenType::Operator),
-                ';' => self.create_token(TokenType::Punctuation),
-                '+' | '-' | '*' | '/' => self.create_token(TokenType::Operator),
-                _ => None,
-            }
-        }
-    }
-
-    fn lex_identifier_or_keyword(&mut self) -> Token {
-        let start_pos = self.position;
-        while let Some(next_char) = self.input.chars().nth(self.position) {
-            if next_char.is_alphanumeric() || next_char == '_' {
-                self.position += 1;
-            } else {
-                break;
-            }
-        }
-        let lexeme = &self.input[start_pos..self.position];
-        let token_type = if lexeme == "let" || lexeme == "fn" {
-            TokenType::Keyword
-        } else {
-            TokenType::Identifier
+            self.operator_or_punctuation()
         };
-        Token {
-            token_type,
-            lexeme: lexeme.to_string(),
-        }
-    }
 
-    fn lex_number(&mut self) -> Token {
-        let start_pos = self.position;
-        while let Some(next_char) = self.input.chars().nth(self.position) {
-            if next_char.is_digit(10) {
-                self.position += 1;
-            } else {
-                break;
-            }
-        }
-        Token {
-            token_type: TokenType::Literal,
-            lexeme: self.input[start_pos..self.position].to_string(),
-        }
-    }
-
-    fn create_token(&mut self, token_type: TokenType) -> Option<Token> {
-        let lexeme = self.input.chars().nth(self.position).unwrap().to_string();
-        self.position += 1;
-        Some(Token { token_type, lexeme })
+        self.position += token.lexeme.len();
+        Some(token)
     }
 
     fn skip_whitespace(&mut self) {
-        while let Some(next_char) = self.input.chars().nth(self.position) {
-            if next_char.is_whitespace() {
-                self.position += 1;
-            } else {
-                break;
-            }
+        while self.position < self.input.len() && self.input.as_bytes()[self.position].is_ascii_whitespace() {
+            self.position += 1;
         }
+    }
+
+    fn identifier(&mut self) -> Token {
+        let start = self.position;
+        while self.position < self.input.len() && self.input.as_bytes()[self.position].is_ascii_alphabetic() {
+            self.position += 1;
+        }
+        let lexeme = &self.input[start..self.position];
+        let token_type = if lexeme == "let" { TokenType::Keyword } else { TokenType::Identifier };
+        Token { token_type, lexeme: lexeme.to_string() }
+    }
+
+    fn number(&mut self) -> Token {
+        let start = self.position;
+        while self.position < self.input.len() && self.input.as_bytes()[self.position].is_ascii_digit() {
+            self.position += 1;
+        }
+        let lexeme = &self.input[start..self.position];
+        Token { token_type: TokenType::Literal, lexeme: lexeme.to_string() }
+    }
+
+    fn operator_or_punctuation(&mut self) -> Token {
+        let current_char = self.input.as_bytes()[self.position] as char;
+        let token_type = match current_char {
+            '=' | '+' | '-' | '*' | '/' => TokenType::Operator,
+            ';' => TokenType::Punctuation,
+            _ => panic!("Unexpected character: {}", current_char),
+        };
+        Token { token_type, lexeme: current_char.to_string() }
     }
 }

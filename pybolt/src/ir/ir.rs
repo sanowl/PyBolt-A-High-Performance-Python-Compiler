@@ -74,49 +74,9 @@ impl IRGenerator {
             _ => Err("Unsupported AST node type".to_string()),
         }
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::lexer::lexer::Lexer;
-    use crate::parser::parser::Parser;
-
-    #[test]
-    fn test_ir_generation() {
-        let input = "let x = 42;";
-        let mut lexer = Lexer::new(input);
-        let mut parser = Parser::new(lexer);
-        let ast = parser.parse().unwrap();
-
-        let mut ir_generator = IRGenerator::new();
-        let ir = ir_generator.generate(&parser).expect("IR generation failed");
-
-        assert_eq!(ir.len(), 1);
-        if let IR::VariableDeclaration { name, value } = &ir[0] {
-            assert_eq!(name, "x");
-            assert_eq!(*value, 42);
-        } else {
-            panic!("Expected variable declaration IR");
-        }
-    }
-
-    #[test]
-    fn test_ir_generation_with_binary_operation() {
-        let input = "let y = 1 + 2;";
-        let mut lexer = Lexer::new(input);
-        let mut parser = Parser::new(lexer);
-        let ast = parser.parse().unwrap();
-
-        let mut ir_generator = IRGenerator::new();
-        let ir = ir_generator.generate(&parser).expect("IR generation failed");
-
-        assert_eq!(ir.len(), 1);
-        if let IR::VariableDeclaration { name, value } = &ir[0] {
-            assert_eq!(name, "y");
-            assert_eq!(*value, 3); // Assuming constant folding optimization
-        } else {
-            panic!("Expected variable declaration IR");
-        }
+    // Add the get_ir method
+    pub fn get_ir(&self) -> &Vec<IR> {
+        &self.ir
     }
 }

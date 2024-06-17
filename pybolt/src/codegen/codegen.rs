@@ -1,6 +1,6 @@
 use crate::ir::ir::{IRGenerator, IR};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum MachineInstruction {
     LoadImmediate { dest: String, value: i32 },
     Add { dest: String, src1: String, src2: String },

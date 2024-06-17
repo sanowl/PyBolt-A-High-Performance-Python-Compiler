@@ -1,12 +1,5 @@
-use crate::ir::ir::{IR, IRGenerator};
+use crate::ir::ir::{IR as IRNode, IRGenerator};
 use std::collections::HashMap;
-
-pub enum IR {
-    VariableDeclaration { name: String, value: i32 },
-    BinaryOperation { left: Box<IR>, operator: String, right: Box<IR>, dest: String },
-    Immediate { value: i32, dest: String },
-    Print { var: String },
-}
 
 pub struct Optimizer {
     optimizations: Vec<Box<dyn Optimization>>,
@@ -19,7 +12,7 @@ impl Optimizer {
         }
     }
 
-    pub fn optimize(&mut self, ir: Vec<IR>) -> Result<Vec<IR>, String> {
+    pub fn optimize(&mut self, ir: Vec<IRNode>) -> Result<Vec<IRNode>, String> {
         let mut optimized_ir = ir;
 
         for optimization in &self.optimizations {
@@ -32,19 +25,19 @@ impl Optimizer {
 }
 
 pub trait Optimization {
-    fn apply(&self, ir: Vec<IR>) -> Result<Vec<IR>, String>;
+    fn apply(&self, ir: Vec<IRNode>) -> Result<Vec<IRNode>, String>;
 }
 
 pub struct ConstantFolding;
 
 impl Optimization for ConstantFolding {
-    fn apply(&self, ir: Vec<IR>) -> Result<Vec<IR>, String> {
+    fn apply(&self, ir: Vec<IRNode>) -> Result<Vec<IRNode>, String> {
         let mut new_ir = Vec::new();
 
         for instruction in ir {
             match instruction {
-                IR::BinaryOperation { left, operator, right, dest } => {
-                    if let (IR::Immediate { value: left_val, dest: _ }, IR::Immediate { value: right_val, dest: _ }) = (*left, *right) {
+                IRNode::BinaryOperation { left, operator, right } => {
+                    if let (IRNode::Immediate { value: left_val, .. }, IRNode::Immediate { value: right_val, .. }) = (*left, *right) {
                         let result = match operator.as_str() {
                             "+" => left_val + right_val,
                             "-" => left_val - right_val,
@@ -52,9 +45,9 @@ impl Optimization for ConstantFolding {
                             "/" => left_val / right_val,
                             _ => return Err(format!("Unknown operator: {}", operator)),
                         };
-                        new_ir.push(IR::Immediate { value: result, dest });
+                        new_ir.push(IRNode::Immediate { value: result, dest: "temp".to_string() });
                     } else {
-                        new_ir.push(IR::BinaryOperation { left, operator, right, dest });
+                        new_ir.push(IRNode::BinaryOperation { left, operator, right });
                     }
                 }
                 _ => new_ir.push(instruction),
@@ -68,19 +61,19 @@ impl Optimization for ConstantFolding {
 pub struct DeadCodeElimination;
 
 impl Optimization for DeadCodeElimination {
-    fn apply(&self, ir: Vec<IR>) -> Result<Vec<IR>, String> {
+    fn apply(&self, ir: Vec<IRNode>) -> Result<Vec<IRNode>, String> {
         let mut used_vars = HashMap::new();
         let mut new_ir = Vec::new();
 
         for instruction in ir.iter().rev() {
             match instruction {
-                IR::BinaryOperation { dest, .. } | IR::Immediate { dest, .. } => {
+                IRNode::Immediate { dest, .. } => {
                     if used_vars.contains_key(dest) {
                         new_ir.push(instruction.clone());
                         used_vars.remove(dest);
                     }
                 }
-                IR::Print { var } => {
+                IRNode::Print { var } => {
                     new_ir.push(instruction.clone());
                     used_vars.insert(var.clone(), true);
                 }
